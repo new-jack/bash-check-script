@@ -1,4 +1,7 @@
 #!/bin/bash
+## Robert Wessinger - 24 JUL 2019
+## Used to check system settings, running service, etc. 
+
 
 damon=$(systemctl list-unit-files | grep enabled | head -n 1 | awk '{print $1}')
 dot=$(systemctl status $damon | head -n 1  | cut -d " " -f 1)
