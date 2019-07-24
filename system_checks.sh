@@ -3,16 +3,21 @@
 ## Used to check system settings, running service, etc. 
 
 
-damon=$(systemctl list-unit-files | grep enabled | head -n 1 | awk '{print $1}')
-dot=$(systemctl status $damon | head -n 1  | cut -d " " -f 1)
-wid=$(tput cols)
-total=$(( $wid - 23 ))
-SUCCESS=$(tput setaf 2; tput bold; echo "SUCCESS")
-FAIL=$(tput setaf 1; tput bold; echo "FAIL")
-fail_log=/tmp/fail_log.txt
+# Variable Declaration
+
+	# Formatting Variables
+	damon=$(systemctl list-unit-files | grep enabled | head -n 1 | awk '{print $1}')
+	dot=$(systemctl status $damon | head -n 1  | cut -d " " -f 1)
+	wid=$(tput cols)
+	total=$(( $wid - 23 ))
+	SUCCESS=$(tput setaf 2; tput bold; echo "SUCCESS")
+	FAIL=$(tput setaf 1; tput bold; echo "FAIL")
+
+	# General Variables
+	fail_log=/tmp/fail_log.txt
+
 
 echo > $fail_log
-
 
 function Print-Message () 
 	{
@@ -107,4 +112,3 @@ Check-Diskspace
 tput bold; tput setaf 1; tput smul
 echo -e \\n\\n"Failed Checks (output from $fail_log)"; tput sgr0
 echo -e "\t$(cat $fail_log)"\\n\\n
-
