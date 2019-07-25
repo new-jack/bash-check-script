@@ -73,7 +73,6 @@ function Check-Dns ()
 		len=$(echo $message | wc -c)
 		difference=$(( $total - $len - 7 ))
 
-		#pingTest=$(tput bold; echo "CHECK: Ping google.com" >> $fail_log; tput sgr0; ping -c 3 google.com 2>> $fail_log 1>> /dev/null)
 		pingTest=$(ping -c 3 google.com 2>> /dev/null)
 
 		if [[ $? -eq "0" ]]; then
@@ -103,7 +102,6 @@ function Check-Diskspace ()
 			
 			
 	}
-
 
 
 Check-Services
