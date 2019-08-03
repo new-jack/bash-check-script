@@ -12,7 +12,8 @@
 	total=$(( $wid - 23 ))
 	SUCCESS=$(tput setaf 2; tput bold; echo "SUCCESS")
 	FAIL=$(tput setaf 1; tput bold; echo "FAIL")
-
+        WARNING=$(tput setaf 3; tput bold; echo "WARNING")
+	
 	# General Variables
 	fail_log=/tmp/fail_log.txt
 
@@ -31,24 +32,41 @@ function Check-Services ()
 	{
 		tput bold; echo -e \\n"Check that vital services are running"\\n; tput sgr0
 
-		services=(httpd mariadb smb firewalld)
-		
-		for i in "${services[@]}"; do
-		
-			message="Check $i is running"
-			len=$(echo $message | wc -c)
-			difference=$(( $total - $len - 7 ))
-			cmdOutput=$(systemctl status $i 2>> /dev/null | grep -c "active")
-			
-			if [[ $cmdOutput == "1" ]]; then
-				Print-Message " " $difference $dot "$message" "$SUCCESS" && tput sgr0
-			else
-				Print-Message " " $difference $dot "$message" "$FAIL" && tput sgr0
-				echo -e "\tCHECK: Check status of $i" >> $fail_log
-				echo -e "\t\tRESULT: Could not find status of $i" >> $fail_log
-				echo -e "\t\tRECCOMENDATION: Try running systemctl status $i"\\n >> $fail_log
-			fi
-		done
+                services=(httpd mariadb smb firewalld lkjsdf)
+
+                for i in "${services[@]}"; do
+
+                        message="Check $i is running"
+                        len=$(echo $message | wc -c)
+                        difference=$(( $total - $len - 7 ))
+                        #cmdOutput=$(systemctl status $i 2> /dev/null | grep -c "active")
+                        cmdOutput=$(systemctl status $i 2> /dev/null)
+                        cmdOutput=$?
+
+                        if [[ $cmdOutput == "0" ]]; then
+                                Print-Message " " $difference $dot "$message" "$SUCCESS" && tput sgr0
+                        elif [[ $cmdOutput == "1" ]]; then
+                                Print-Message " " $difference $dot "$message" "$FAIL" && tput sgr0
+                                echo -e "\tCHECK: Check status of $i" >> $fail_log
+                                echo -e "\t\tRESULT: Return Code was 1. Loaded but FAILED" >> $fail_log
+                                echo -e "\t\tRECCOMENDATION: systemctl status -l $i or journalctl -xe for more info"\\n >> $fail_log
+                        elif [[ $cmdOutput == "3" ]]; then
+                                Print-Message " " $difference $dot "$message" "$WARNING" && tput sgr0
+                                echo -e "\tCHECK: Check status of $i" >> $fail_log
+                                echo -e "\t\tRESULT: Return Code was 3. Loaded but not active" >> $fail_log
+                                echo -e "\t\tRECCOMENDATION: If needed, run systemctl start $i"\\n >> $fail_log
+                        elif [[ $cmdOutput == "4" ]]; then
+                                Print-Message " " $difference $dot "$message" "$FAIL" && tput sgr0
+                                echo -e "\tCHECK: Check status of $i" >> $fail_log
+                                echo -e "\t\tRESULT: Return Code was 4. Service not found (not installed)"\\n >> $fail_log
+                        else
+                                Print-Message " " $difference $dot "$message" "$FAIL" && tput sgr0
+                                echo -e "\tCHECK: Check status of $i" >> $fail_log
+                                echo -e "\t\tRESULT: Could not find status of $i" >> $fail_log
+                                echo -e "\t\tRECCOMENDATION: Try running systemctl status $i"\\n >> $fail_log
+                        fi
+                done
+
 	}
 
 
