@@ -5,9 +5,17 @@
 
 # Variable Declaration
 
-	# Formatting Variables
+
+
+if [ ! -f /usr/bin/systemctl ]; then
 	damon=$(systemctl list-unit-files | grep enabled | head -n 1 | awk '{print $1}')
 	dot=$(systemctl status $damon | head -n 1  | cut -d " " -f 1)
+else
+	dot='-'
+
+fi
+
+	# Formatting Variables
 	wid=$(tput cols)
 	total=$(( $wid - 23 ))
 	SUCCESS=$(tput setaf 2; tput bold; echo "SUCCESS")
