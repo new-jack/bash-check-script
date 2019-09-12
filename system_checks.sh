@@ -7,19 +7,14 @@
 
 
 
-if [ -f /usr/bin/systemctl ]; then
-	damon=$(systemctl list-unit-files | grep enabled | head -n 1 | awk '{print $1}')
-	dot=$(systemctl status $damon | head -n 1  | cut -d " " -f 1)
-else
-	dot='-'
-
-fi
-
 	# Formatting Variables
+	dot=$(echo -e "\u25CF")
 	wid=$(tput cols)
 	total=$(( $wid - 23 ))
 	SUCCESS=$(tput setaf 2; tput bold; echo "SUCCESS")
+	#SUCCESS=$(tput setaf 2; tput bold; echo -e "\033[0;32m\xE2\x9C\x94\033[0m")
 	FAIL=$(tput setaf 1; tput bold; echo "FAIL")
+	#FAIL=$(tput setaf 1; tput bold; tput blink; echo -e "\u274c")
         WARNING=$(tput setaf 3; tput bold; echo "WARNING")
 	
 	# General Variables
