@@ -5,8 +5,6 @@
 
 # Variable Declaration
 
-
-
 	# Formatting Variables
 	dot=$(echo -e "\u25CF")
 	wid=$(tput cols)
@@ -23,6 +21,8 @@
 
 echo > $fail_log
 
+
+
 function Print-Message () 
 	{
 		 str=$1
@@ -35,16 +35,23 @@ function Check-Services ()
 	{
 		tput bold; echo -e \\n"Check that vital services are running"\\n; tput sgr0
 
-                services=(httpd mariadb smb firewalld lkjsdf)
+                services=(httpd mariadb smb firewalld foo)
+
+			if [[ $saveOutput == "1" ]]; then
+				echo '#daemon: systemctl return code' >> $outputFile
+			fi
 
                 for i in "${services[@]}"; do
 
                         message="Check $i is running"
                         len=$(echo $message | wc -c)
                         difference=$(( $total - $len - 7 ))
-                        #cmdOutput=$(systemctl status $i 2> /dev/null | grep -c "active")
-                        cmdOutput=$(systemctl status $i 2> /dev/null)
+			cmdOutput=$(systemctl is-active $i 2> /dev/null)
                         cmdOutput=$?
+			
+			if [[ $saveOutput == "1" ]]; then
+				echo "$i: $cmdOutput" >> $outputFile
+			fi
 
                         if [[ $cmdOutput == "0" ]]; then
                                 Print-Message " " $difference $dot "$message" "$SUCCESS" && tput sgr0
@@ -76,32 +83,56 @@ function Check-Services ()
 function Check-Dns ()
 	{
 		tput bold; echo -e \\n"Check DNS Functionality"\\n; tput sgr0
+		nameServer="8.8.8.8"
 		message="Check resolv.conf settings"
 		len=$(echo $message | wc -c)
 		difference=$(( $total - $len - 7 ))
-		
-		nameserver=$(grep -v "#" /etc/resolv.conf | grep -c "8.8.8.8")
+	
+		if [[ $saveOutput == "1" ]]; then
+			echo -e \\n'#nameserver: present or not (boolean)' >> $outputFile
+		fi
 
+		nameserver=$(grep -v "#" /etc/resolv.conf | grep -c "$nameServer")
 		if [[ $nameserver -ge "1" ]]; then
 			Print-Message " " $difference $dot "$message" "$SUCCESS" && tput sgr0
+			if [[ $saveOutput == "1" ]]; then
+				echo "$nameServer: 1" >> $outputFile
+			fi
 		else
 			Print-Message " " $difference $dot "$message" "$FAIL" && tput sgr0
 			echo -e "\tCHECK: $message" >> $fail_log
 			echo -e "\t\tRESULT: Could not find nameserver 8.8.8.8 in resolv.conf"\\n >> $fail_log
+			if [[ $saveOutput == "1" ]]; then
+				echo "$nameServer: 0" >> $outputFile
+			fi
 		fi
 	
 		message="Try pinging google.com"
 		len=$(echo $message | wc -c)
 		difference=$(( $total - $len - 7 ))
+		pingSite="google.com"
 
-		pingTest=$(ping -c 3 google.com 2>> /dev/null)
+		if [[ $saveOutput == "1" ]]; then
+			echo -e \\n"#ping $pingSite: present or not (boolean)" >> $outputFile
+		fi
 
-		if [[ $? -eq "0" ]]; then
+		pingTest=$(ping -c 3 $pingSite 2>> /dev/null)
+		cmdOutput=$?
+	
+		
+		if [[ $cmdOutput -eq "0" ]]; then
 			Print-Message " " $difference $dot "$message" "$SUCCESS" && tput sgr0
+			if [[ $saveOutput == "1" ]]; then
+				echo -e "$pingSite: 1" >> $outputFile
+			fi
+
 		else
 			Print-Message " " $difference $dot "$message" "$FAIL" && tput sgr0
 			echo -e "\tCHECK: $message" >> $fail_log
 			echo -e "\t\tRESULT: could not ping google.com"\\n >> $fail_log
+			if [[ $saveOutput == "1" ]]; then
+				echo -e "$pingSite: 0" >> $outputFile
+			fi
 		fi
 			
 	}
@@ -113,16 +144,60 @@ function Check-Diskspace ()
 		len=$(echo $message | wc -c)
 		difference=$(( $total - $len - 7 ))
 			
+		if [[ $saveOutput == "1" ]]; then
+			echo -e \\n"#disk check: 0 if no disks are full, 1 if one or more is full" >> $outputFile
+		fi
+		
 		diskFull=$(df -h | awk '{print $5}' | grep -c "100")
 		
 		if [[ $diskFull -lt "1" ]]; then
 			Print-Message " " $difference $dot "$message" "$SUCCESS" && tput sgr0
+			if [[ $saveOutput == "1" ]]; then
+				echo -e "disks full: 0" >> $outputFile
+			fi
 		else
 			Print-Message " " $difference $dot "$message" "$FAIL" && tput sgr0
+			if [[ $saveOutput == "1" ]]; then
+				echo -e "disks full: 1" >> $outputFile
+			fi
 		fi
 			
 			
 	}
+
+
+if [ ! -z "$1" ]; then
+	if [[ $1 == '--out' ]]; then
+		out=1
+		if [ ! -z $2 ]; then
+			outputFile=$2
+		fi
+	else
+		echo "$1 is unknown. Please use flag --out"
+	fi
+fi
+
+
+if [ ! -z $out ] && [ ! -z $outputFile ]; then 
+	if [ -f $outputFile ]; then
+		if ! $(truncate -s 0 $outputFile); then 
+			echo "Couldn't truncate $outputFile"
+		       	exit
+		else
+			saveOutput=1
+	        fi
+	else
+		if ! $(touch $outputFile); then 
+			echo "Couldn't create file $outputFile"
+			exit
+		else
+			saveOutput=1
+		fi
+		exit
+	fi
+
+fi	
+
 
 
 Check-Services
