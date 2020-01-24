@@ -220,9 +220,9 @@ if [ ! -z $out ] && [ ! -z $outputFile ]; then
 			echo "Couldn't create file $outputFile"
 			exit
 		else
+			echo "File creation pass"
 			saveOutput=1
 		fi
-		exit
 	fi
 
 fi	
