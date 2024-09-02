@@ -1,0 +1,35 @@
+title: Run through basic checks
+tests:
+
+  - name: Check if ansible command is in user's path
+    command: command -v ansible
+    type: return_code
+    success_code: 0
+    fail_code: 1
+    warn_code: '>1'
+
+  - name: Check if foobar command is in user's path
+    command: command -v foobar
+    type: return_code
+    success_code: 0
+    fail_code: 1
+    warn_code: '>1'
+
+  - name: Check if 8.8.8.8 is in resolv.conf
+    type: grep_check
+    path: /etc/resolv.conf
+    value: 8.8.8.8
+    ignore_case: TrUe
+    
+  - name: Check if httpd is running
+    command: systemctl status httpd
+    type: return_code
+    success_code: 0
+    fail_code: 1
+    warn_code: '>1'
+  
+  - name: Delete old log file
+    command: sudo rm -f /tmp/fail_log.txt
+    type: return_code
+    success_code: 0
+    fail_code: 1
